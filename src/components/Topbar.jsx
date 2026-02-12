@@ -40,21 +40,23 @@ const Topbar = ({ sidebarOpen, setSidebarOpen }) => {
           </svg>
         </button>
 
-        {/* <h1 className="text-lg lg:text-xl font-semibold text-gray-700 dark:text-gray-100">
+        <h1 className="text-lg lg:text-xl font-semibold text-gray-700 dark:text-gray-100 block md:hidden">
           EverYoung Clinic
-        </h1> */}
+        </h1>
+
+        {/* Greeting — Hidden on small screens */}
+        <h2 className="hidden md:block text-[20px] font-medium text-gray-700 dark:text-gray-200 whitespace-nowrap">
+          {greeting}
+          {userName ? `, ${userName}` : ", Doctor"}
+        </h2>
       </div>
 
-      {/* Center Section — Greeting + Search */}
+      {/* Center Section —  Search */}
       <div className="flex-1 flex items-center justify-center gap-6">
-        {/* Greeting — Hidden on small screens */}
-        <h2 className="hidden md:block text-base font-medium text-gray-700 dark:text-gray-200 whitespace-nowrap">
-          {greeting}
-          {userName ? `, ${userName}` : "Doctor"}
-        </h2>
+        
 
         {/* Search Bar — Shrinked width for better balance */}
-        <div className="relative w-[220px] md:w-[280px] lg:w-[340px] hidden sm:block">
+        <div className="relative w-[220px] md:w-[300px] lg:w-[380px] hidden sm:block">
           <input
             type="text"
             placeholder="Search..."
