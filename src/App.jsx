@@ -15,9 +15,14 @@ import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
 import Dashboard from "./pages/Dashboard";
 import Patients from "./pages/Patients";
+import AddPatient from "./pages/AddPatient";
 import Doctors from "./pages/Doctors";
+import DoctorProfile from "./pages/DoctorProfile";
+import AddDoctor from "./pages/AddDoctor";
 import Appointments from "./pages/Appointments";
+import AddAppointment from "./pages/AddAppointment";
 import Billing from "./pages/Billing";
+import AddBilling from "./pages/AddBilling";
 import Reports from "./pages/Reports";
 
 function App() {
@@ -47,13 +52,18 @@ function App() {
                   <Topbar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
                   {/* Main Content */}
-                  <main className="flex-1 p-6 bg-[#f1f3f4] dark:bg-gray-700">
+                  <main className="flex-1 p-6 md:ml-[16rem] bg-[#f1f3f4] dark:bg-gray-700">
                     <Routes>
                       <Route path="/" element={<Dashboard />} />
                       <Route path="/patients" element={<Patients />} />
+                      <Route path="/add-patient" element={<AddPatient />} />
                       <Route path="/doctors" element={<Doctors />} />
+                      <Route path="/doctor-profile" element={<DoctorProfile />} />
+                      <Route path="/add-doctor" element={<AddDoctor />} />
                       <Route path="/appointments" element={<Appointments />} />
+                      <Route path="/add-appointment" element={<AddAppointment />} />
                       <Route path="/billing" element={<Billing />} />
+                      <Route path="/add-billing" element={<AddBilling />} />
                       <Route path="/reports" element={<Reports />} />
                       <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>

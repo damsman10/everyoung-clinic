@@ -1,13 +1,15 @@
 import { useState } from "react";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth } from "../../../src/firebase";
 
 export default function SignupForm() {
   const [email, setEmail] = useState("");
+  const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSignUp = async (e) => {
     e.preventDefault();
@@ -19,15 +21,30 @@ export default function SignupForm() {
       return;
     }
 
+    setIsLoading(true);
+
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      setSuccess("Account created successfully! You can now log in.");
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+      // Add display name to user profile
+      await updateProfile(userCredential.user, {
+        displayName: fullName,
+      });
+
+      setSuccess(`Welcome, ${fullName}! Your account was created successfully.`);
       setEmail("");
+      setFullName("");
       setPassword("");
       setConfirmPassword("");
     } catch (err) {
       console.error(err);
       setError("Error creating account. Try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -42,8 +59,26 @@ export default function SignupForm() {
         </p>
 
         <form onSubmit={handleSignUp} className="space-y-5">
+          {/* Full Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-600">Email</label>
+            <label className="block text-sm font-medium text-gray-600">
+              Full Name
+            </label>
+            <input
+              type="text"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              placeholder="Enter your full name"
+              required
+            />
+          </div>
+
+          {/* Email */}
+          <div>
+            <label className="block text-sm font-medium text-gray-600">
+              Email
+            </label>
             <input
               type="email"
               value={email}
@@ -54,8 +89,11 @@ export default function SignupForm() {
             />
           </div>
 
+          {/* Password */}
           <div>
-            <label className="block text-sm font-medium text-gray-600">Password</label>
+            <label className="block text-sm font-medium text-gray-600">
+              Password
+            </label>
             <input
               type="password"
               value={password}
@@ -66,8 +104,11 @@ export default function SignupForm() {
             />
           </div>
 
+          {/* Confirm Password */}
           <div>
-            <label className="block text-sm font-medium text-gray-600">Confirm Password</label>
+            <label className="block text-sm font-medium text-gray-600">
+              Confirm Password
+            </label>
             <input
               type="password"
               value={confirmPassword}
@@ -81,16 +122,25 @@ export default function SignupForm() {
           {error && <p className="text-red-500 text-sm">{error}</p>}
           {success && <p className="text-green-600 text-sm">{success}</p>}
 
+          {/* Submit Button */}
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2.5 rounded-md font-medium hover:bg-blue-700 transition"
+            disabled={isLoading}
+            className={`w-full py-2.5 rounded-md font-medium transition ${
+              isLoading
+                ? "bg-blue-400 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700 text-white"
+            }`}
           >
-            Sign Up
+            {isLoading ? "Creating account..." : "Sign Up"}
           </button>
 
           <p className="text-sm text-center text-gray-500 mt-4">
             Already have an account?{" "}
-            <a href="/login" className="text-blue-600 hover:underline font-medium">
+            <a
+              href="/login"
+              className="text-blue-600 hover:underline font-medium"
+            >
               Log in
             </a>
           </p>

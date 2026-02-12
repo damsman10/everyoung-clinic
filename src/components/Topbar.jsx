@@ -1,12 +1,26 @@
+import { useEffect, useState } from "react";
 import { Search, Bell } from "lucide-react";
+import { auth } from "../firebase";
 import ppic from "../assets/ppic.jpg";
 
 const Topbar = ({ sidebarOpen, setSidebarOpen }) => {
+  const [userName, setUserName] = useState("");
+
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (user?.displayName) {
+      setUserName(user.displayName);
+    }
+  }, []);
+
+  const hour = new Date().getHours();
+  const greeting =
+    hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+
   return (
-    <header className="h-[5rem] flex items-center justify-between px-6 bg-white dark:bg-[#1E293B] border-b border-gray-200 dark:border-gray-700 shadow-sm">
+    <header className="h-[5rem] flex items-center justify-between md:pl-72 px-6 bg-white dark:bg-[#1E293B] border-b border-gray-200 dark:border-gray-700 shadow-sm">
       {/* Left Section — Hamburger + Logo */}
-      <div className="flex items-center gap-3">
-        {/* Hamburger for mobile */}
+      <div className="flex items-center gap-4">
         <button
           className="lg:hidden text-gray-700 dark:text-gray-300 focus:outline-none"
           onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -26,29 +40,35 @@ const Topbar = ({ sidebarOpen, setSidebarOpen }) => {
           </svg>
         </button>
 
-        {/* Logo text (always visible on mobile) */}
         <h1 className="text-lg lg:text-xl font-semibold text-gray-700 dark:text-gray-100">
           EverYoung Clinic
         </h1>
       </div>
 
-      {/* Center Section — Search (hidden on mobile) */}
-      <div className="flex-1 justify-center hidden lg:flex px-4">
-        <div className="relative w-full max-w-xl">
+      {/* Center Section — Greeting + Search */}
+      <div className="flex-1 flex items-center justify-center gap-6">
+        {/* Greeting — Hidden on small screens */}
+        <h2 className="hidden md:block text-base font-medium text-gray-700 dark:text-gray-200 whitespace-nowrap">
+          {greeting}
+          {userName ? `, ${userName}` : ""}
+        </h2>
+
+        {/* Search Bar — Shrinked width for better balance */}
+        <div className="relative w-[220px] md:w-[280px] lg:w-[340px] hidden sm:block">
           <input
             type="text"
-            placeholder="Search patients, doctors, or records..."
-            className="w-full pl-12 pr-4 py-3 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Search..."
+            className="w-full pl-9 pr-4 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <Search
             size={16}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-300"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-300"
           />
         </div>
       </div>
 
       {/* Right Section — Notifications + Avatar */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-6">
         <button className="relative text-gray-600 dark:text-gray-300 hover:text-[#3D78DA] transition">
           <Bell size={20} />
           <span className="absolute top-0 right-0 bg-red-500 text-white rounded-full text-[10px] px-[4px]">
