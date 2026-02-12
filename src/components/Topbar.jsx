@@ -40,9 +40,9 @@ const Topbar = ({ sidebarOpen, setSidebarOpen }) => {
           </svg>
         </button>
 
-        <h1 className="text-lg lg:text-xl font-semibold text-gray-700 dark:text-gray-100">
+        {/* <h1 className="text-lg lg:text-xl font-semibold text-gray-700 dark:text-gray-100">
           EverYoung Clinic
-        </h1>
+        </h1> */}
       </div>
 
       {/* Center Section — Greeting + Search */}
@@ -50,7 +50,7 @@ const Topbar = ({ sidebarOpen, setSidebarOpen }) => {
         {/* Greeting — Hidden on small screens */}
         <h2 className="hidden md:block text-base font-medium text-gray-700 dark:text-gray-200 whitespace-nowrap">
           {greeting}
-          {userName ? `, ${userName}` : ""}
+          {userName ? `, ${userName}` : "Doctor"}
         </h2>
 
         {/* Search Bar — Shrinked width for better balance */}
