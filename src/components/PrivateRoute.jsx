@@ -1,13 +1,12 @@
 import { Navigate } from "react-router-dom";
-import { useAuthState } from "react-firebase-hooks/auth";
-import { auth } from "../firebase"; // adjust path
+import { useAuth } from "../context/AuthContext";
 
 export default function PrivateRoute({ children }) {
-  const [user, loading] = useAuthState(auth);
+  const { user, loading } = useAuth();
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen text-blue-600">
+      <div className="flex items-center justify-center h-screen text-blue-600">
         Loading...
       </div>
     );

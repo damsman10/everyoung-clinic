@@ -1,17 +1,11 @@
-import { useEffect, useState } from "react";
 import { Search, Bell } from "lucide-react";
-import { auth } from "../firebase";
+import { useAuth } from "../context/AuthContext";
 import ppic from "../assets/ppic.jpg";
 
 const Topbar = ({ sidebarOpen, setSidebarOpen }) => {
-  const [userName, setUserName] = useState("");
+  const { profile } = useAuth();
 
-  useEffect(() => {
-    const user = auth.currentUser;
-    if (user?.displayName) {
-      setUserName(user.displayName);
-    }
-  }, []);
+  const userName = profile?.fullName || "";
 
   const hour = new Date().getHours();
   const greeting =
@@ -41,27 +35,25 @@ const Topbar = ({ sidebarOpen, setSidebarOpen }) => {
         </button>
 
         <h1 className="text-lg lg:text-xl font-semibold text-gray-700 dark:text-gray-100 block md:hidden">
-          EverYoung Clinic
+          RadX Attendance System
         </h1>
 
         {/* Greeting — Hidden on small screens */}
         <h2 className="hidden md:block text-[20px] font-medium text-gray-700 dark:text-gray-200 whitespace-nowrap">
           {greeting}
-          {userName ? `, ${userName}` : ", Doctor"}
+          {userName ? `, ${userName}` : ", User"}
         </h2>
       </div>
 
-      {/* Center Section —  Search */}
+      {/* Center Section — Search */}
       <div className="flex-1 flex items-center justify-center gap-6">
-        
-
-        {/* Search Bar — Shrinked width for better balance */}
         <div className="relative w-[220px] md:w-[300px] lg:w-[380px] hidden sm:block">
           <input
             type="text"
             placeholder="Search..."
             className="w-full pl-9 pr-4 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
+
           <Search
             size={16}
             className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-300"
@@ -73,6 +65,7 @@ const Topbar = ({ sidebarOpen, setSidebarOpen }) => {
       <div className="flex items-center gap-6">
         <button className="relative text-gray-600 dark:text-gray-300 hover:text-[#3D78DA] transition">
           <Bell size={20} />
+
           <span className="absolute top-0 right-0 bg-red-500 text-white rounded-full text-[10px] px-[4px]">
             2
           </span>

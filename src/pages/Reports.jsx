@@ -1,231 +1,340 @@
-import React, { useState } from "react";
-import {
-  Calendar,
-  Printer,
-  FileSpreadsheet,
-  FileText,
-} from "lucide-react";
-import { Line, Bar, Pie } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Tooltip,
-  Legend,
-} from "chart.js";
+import { useEffect, useMemo, useState } from "react";
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Tooltip,
-  Legend
-);
+import {
+  collection,
+  onSnapshot,
+  query,
+  where,
+} from "firebase/firestore";
+
+import { db } from "../firebase";
+import { useAuth } from "../context/AuthContext";
 
 const Reports = () => {
-  const [filters, setFilters] = useState({
-    start: "",
-    end: "",
-    doctor: "",
-  });
+  const { user } = useAuth();
 
-  const appointmentData = {
-    labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-    datasets: [
-      {
-        label: "Appointments",
-        data: [12, 18, 10, 22, 19, 8],
-        borderColor: "#2563eb",
-        backgroundColor: "rgba(37, 99, 235, 0.2)",
-        tension: 0.4,
-      },
-    ],
-  };
+  const [sessions, setSessions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const patientGrowthData = {
-    labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
-    datasets: [
-      {
-        label: "New Patients",
-        data: [25, 34, 40, 45, 38, 50],
-        borderColor: "#16a34a",
-        backgroundColor: "rgba(22, 163, 74, 0.2)",
-        tension: 0.35,
-      },
-    ],
-  };
+  useEffect(() => {
+    if (!user) return;
 
-  const revenueExpenseData = {
-    labels: ["Jan", "Feb", "Mar", "Apr"],
-    datasets: [
-      {
-        label: "Revenue",
-        data: [500000, 650000, 600000, 800000],
-        backgroundColor: "#16a34a",
-      },
-      {
-        label: "Expenses",
-        data: [300000, 400000, 380000, 420000],
-        backgroundColor: "#dc2626",
-      },
-    ],
-  };
+    const q = query(
+      collection(db, "attendanceSessions"),
+      where("lecturerId", "==", user.uid)
+    );
 
-  const appointmentStatusData = {
-    labels: ["Completed", "Scheduled", "Cancelled"],
-    datasets: [
-      {
-        data: [60, 25, 15],
-        backgroundColor: ["#16a34a", "#2563eb", "#dc2626"],
-      },
-    ],
-  };
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const data = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
 
-  const doctorPerformanceData = {
-    labels: ["Dr. Smith", "Dr. Johnson", "Dr. Adams"],
-    datasets: [
-      {
-        label: "Appointments",
-        data: [42, 30, 25],
-        backgroundColor: "#2563eb",
-      },
-    ],
-  };
+        data.sort(
+          (a, b) =>
+            (b.createdAt?.seconds || 0) -
+            (a.createdAt?.seconds || 0)
+        );
 
-  const billingSummary = [
-    { id: "BILL-001", patient: "John Doe", amount: "₦45,000", status: "Paid", date: "2025-11-10" },
-    { id: "BILL-002", patient: "Jane Roe", amount: "₦30,000", status: "Pending", date: "2025-11-11" },
-    { id: "BILL-003", patient: "Sarah Lee", amount: "₦60,000", status: "Paid", date: "2025-11-12" },
-  ];
+        setSessions(data);
+        setLoading(false);
+      },
+      (error) => {
+        console.log(error);
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [user]);
+
+  const report = useMemo(() => {
+    const totalSessions = sessions.length;
+
+    const totalStudents = sessions.reduce(
+      (sum, session) => sum + (session.studentCount || 0),
+      0
+    );
+
+    const totalPresent = sessions.reduce(
+      (sum, session) => sum + (session.presentCount || 0),
+      0
+    );
+
+    const totalAbsent = totalStudents - totalPresent;
+
+    const attendanceRate =
+      totalStudents > 0
+        ? Math.round((totalPresent / totalStudents) * 100)
+        : 0;
+
+    return {
+      totalSessions,
+      totalStudents,
+      totalPresent,
+      totalAbsent,
+      attendanceRate,
+    };
+  }, [sessions]);
 
   return (
-    <div className="p-6 space-y-10">
+    <div className="space-y-8 p-6">
 
-      {/* ---------------- FILTER PANEL ---------------- */}
-      <div className="bg-white p-6 rounded-2xl shadow border border-gray-100 flex flex-wrap gap-4 items-end">
-        
-        <div>
-          <label className="text-gray-600 font-medium">Start Date</label>
-          <input
-            type="date"
-            className="block mt-1 p-3 border rounded-xl bg-gray-50"
-            value={filters.start}
-            onChange={(e) => setFilters({ ...filters, start: e.target.value })}
-          />
-        </div>
+      <div>
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
+          Reports & Analytics
+        </h1>
 
-        <div>
-          <label className="text-gray-600 font-medium">End Date</label>
-          <input
-            type="date"
-            className="block mt-1 p-3 border rounded-xl bg-gray-50"
-            value={filters.end}
-            onChange={(e) => setFilters({ ...filters, end: e.target.value })}
-          />
-        </div>
-
-        <div>
-          <label className="text-gray-600 font-medium">Doctor</label>
-          <select
-            className="block mt-1 p-3 border rounded-xl bg-gray-50"
-            value={filters.doctor}
-            onChange={(e) => setFilters({ ...filters, doctor: e.target.value })}
-          >
-            <option value="">All Doctors</option>
-            <option>Dr. John Smith</option>
-            <option>Dr. Sarah Johnson</option>
-            <option>Dr. Michael Adams</option>
-          </select>
-        </div>
-
-        <button className="ml-auto bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-3 rounded-xl transition">
-          Apply Filters
-        </button>
+        <p className="mt-2 text-gray-600 dark:text-gray-300">
+          Analyse attendance performance, student participation and session history.
+        </p>
       </div>
 
-      {/* ---------------- APPOINTMENT CHART ---------------- */}
-      <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
-        <h2 className="text-xl font-semibold mb-4">Appointments Summary</h2>
-        <Line data={appointmentData} />
-      </div>
+      <div className="grid gap-6 md:grid-cols-4">
 
-      {/* ---------------- TWO CHARTS ROW ---------------- */}
-      <div className="grid lg:grid-cols-2 gap-6">
+        <div className="rounded-2xl bg-white p-5 shadow dark:bg-gray-900">
+          <p className="text-gray-500">
+            Total Sessions
+          </p>
 
-        <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
-          <h2 className="text-xl font-semibold mb-4">Patient Growth</h2>
-          <Line data={patientGrowthData} />
+          <h2 className="mt-2 text-3xl font-bold">
+            {report.totalSessions}
+          </h2>
         </div>
 
-        <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
-          <h2 className="text-xl font-semibold mb-4">Revenue vs Expenses</h2>
-          <Bar data={revenueExpenseData} />
+        <div className="rounded-2xl bg-white p-5 shadow dark:bg-gray-900">
+          <p className="text-gray-500">
+            Attendance Rate
+          </p>
+
+          <h2 className="mt-2 text-3xl font-bold text-green-600">
+            {report.attendanceRate}%
+          </h2>
+        </div>
+
+        <div className="rounded-2xl bg-white p-5 shadow dark:bg-gray-900">
+          <p className="text-gray-500">
+            Students Tracked
+          </p>
+
+          <h2 className="mt-2 text-3xl font-bold">
+            {report.totalStudents}
+          </h2>
+        </div>
+
+        <div className="rounded-2xl bg-white p-5 shadow dark:bg-gray-900">
+          <p className="text-gray-500">
+            Total Absentees
+          </p>
+
+          <h2 className="mt-2 text-3xl font-bold text-red-600">
+            {report.totalAbsent}
+          </h2>
         </div>
 
       </div>
 
-      {/* ---------------- APPOINTMENT STATUS PIE ---------------- */}
-      <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 w-full lg:w-1/2 mx-auto">
-        <h2 className="text-xl font-semibold mb-4 text-center">
-          Appointment Status Breakdown
+      <div className="rounded-2xl bg-white p-6 shadow dark:bg-gray-900">
+
+        <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
+          Attendance Overview
         </h2>
-        <Pie data={appointmentStatusData} />
+
+        <div className="mt-6 grid gap-6 md:grid-cols-3">
+
+          <div className="rounded-xl bg-green-50 p-5 dark:bg-green-900/20">
+
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Present
+            </p>
+
+            <p className="mt-2 text-3xl font-bold text-green-600">
+              {report.attendanceRate}%
+            </p>
+
+          </div>
+
+          <div className="rounded-xl bg-orange-50 p-5 dark:bg-orange-900/20">
+
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Late
+            </p>
+
+            <p className="mt-2 text-3xl font-bold text-orange-600">
+              0%
+            </p>
+
+          </div>
+
+          <div className="rounded-xl bg-red-50 p-5 dark:bg-red-900/20">
+
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Absent
+            </p>
+
+            <p className="mt-2 text-3xl font-bold text-red-600">
+              {report.totalStudents > 0
+                ? Math.round(
+                    (report.totalAbsent /
+                      report.totalStudents) *
+                      100
+                  )
+                : 0}%
+            </p>
+
+          </div>
+
+        </div>
+
       </div>
 
-      {/* ---------------- DOCTOR PERFORMANCE ---------------- */}
-      <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
-        <h2 className="text-xl font-semibold mb-4">Doctor Performance</h2>
-        <Bar data={doctorPerformanceData} />
-      </div>
+      <div className="rounded-2xl bg-white shadow dark:bg-gray-900">
 
-      {/* ---------------- BILLING SUMMARY TABLE ---------------- */}
-      <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
-        <h2 className="text-xl font-semibold mb-4">Billing Summary</h2>
+        <div className="border-b p-6 dark:border-gray-700">
 
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="bg-gray-100 text-gray-600 text-sm">
-              <th className="py-3 px-4 text-left">Bill ID</th>
-              <th className="py-3 px-4 text-left">Patient</th>
-              <th className="py-3 px-4 text-left">Amount</th>
-              <th className="py-3 px-4 text-left">Status</th>
-              <th className="py-3 px-4 text-left">Date</th>
-            </tr>
-          </thead>
+          <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
+            Course Attendance Performance
+          </h2>
 
-          <tbody>
-            {billingSummary.map((bill, index) => (
-              <tr key={index} className="border-b">
-                <td className="py-3 px-4">{bill.id}</td>
-                <td className="py-3 px-4">{bill.patient}</td>
-                <td className="py-3 px-4">{bill.amount}</td>
-                <td className="py-3 px-4 font-medium">{bill.status}</td>
-                <td className="py-3 px-4">{bill.date}</td>
+        </div>
+
+        <div className="overflow-x-auto">
+
+          <table className="w-full text-left">
+
+            <thead className="border-b dark:border-gray-700">
+
+              <tr>
+
+                <th className="px-6 py-4">
+                  Course
+                </th>
+
+                <th className="px-6 py-4">
+                  Date
+                </th>
+
+                <th className="px-6 py-4">
+                  Present
+                </th>
+
+                <th className="px-6 py-4">
+                  Attendance
+                </th>
+
               </tr>
-            ))}
-          </tbody>
-        </table>
+
+            </thead>
+
+                        <tbody>
+
+              {loading ? (
+
+                <tr>
+
+                  <td
+                    colSpan={4}
+                    className="px-6 py-8 text-center text-gray-500"
+                  >
+                    Loading reports...
+                  </td>
+
+                </tr>
+
+              ) : sessions.length === 0 ? (
+
+                <tr>
+
+                  <td
+                    colSpan={4}
+                    className="px-6 py-8 text-center text-gray-500"
+                  >
+                    No attendance sessions found.
+                  </td>
+
+                </tr>
+
+              ) : (
+
+                sessions.map((session) => {
+
+                  const attendance =
+                    session.studentCount > 0
+                      ? Math.round(
+                          (session.presentCount /
+                            session.studentCount) *
+                            100
+                        )
+                      : 0;
+
+                  return (
+
+                    <tr
+                      key={session.id}
+                      className="border-b last:border-none dark:border-gray-700"
+                    >
+
+                      <td className="px-6 py-4">
+
+                        <p className="font-medium">
+                          {session.courseCode}
+                        </p>
+
+                        <p className="text-sm text-gray-500">
+                          {session.courseTitle}
+                        </p>
+
+                      </td>
+
+                      <td className="px-6 py-4">
+
+                        {session.createdAt
+                          ?.toDate()
+                          .toLocaleDateString()}
+
+                      </td>
+
+                      <td className="px-6 py-4">
+
+                        {session.presentCount}/
+                        {session.studentCount}
+
+                      </td>
+
+                      <td className="px-6 py-4">
+
+                        <span
+                          className={`rounded-full px-3 py-1 text-sm font-semibold ${
+                            attendance >= 75
+                              ? "bg-green-100 text-green-700"
+                              : attendance >= 50
+                              ? "bg-orange-100 text-orange-700"
+                              : "bg-red-100 text-red-700"
+                          }`}
+                        >
+                          {attendance}%
+                        </span>
+
+                      </td>
+
+                    </tr>
+
+                  );
+
+                })
+
+              )}
+
+            </tbody>
+
+          </table>
+
+        </div>
+
       </div>
 
-      {/* ---------------- EXPORT BUTTONS ---------------- */}
-      <div className="flex justify-end gap-4">
-        <button className="flex items-center gap-2 bg-gray-100 px-5 py-3 rounded-xl hover:bg-gray-200 transition">
-          <FileText size={18} /> Export PDF
-        </button>
-        <button className="flex items-center gap-2 bg-gray-100 px-5 py-3 rounded-xl hover:bg-gray-200 transition">
-          <FileSpreadsheet size={18} /> Export Excel
-        </button>
-        <button className="flex items-center gap-2 bg-gray-100 px-5 py-3 rounded-xl hover:bg-gray-200 transition">
-          <Printer size={18} /> Print
-        </button>
-      </div>
     </div>
   );
 };
